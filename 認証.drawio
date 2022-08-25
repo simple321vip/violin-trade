@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-08-25T12:08:38.616Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36" etag="T88ybckBi3nS8HeVNkuA" version="20.2.7" type="github">
+<mxfile host="app.diagrams.net" modified="2022-08-25T12:11:44.962Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36" etag="tUUMTvAR5PYryMBU6LrO" version="20.2.7" type="github">
   <diagram name="Page-1" id="edf60f1a-56cd-e834-aa8a-f176f3a09ee4">
     <mxGraphModel dx="1221" dy="672" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
       <root>
@@ -79,13 +79,13 @@
             <mxPoint x="633" y="410" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="0lrkoqPi9YDPyT_f_Kjm-16" value="レンタル&lt;br&gt;申請画面" style="whiteSpace=wrap;html=1;rounded=0;shadow=1;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=8;align=center;spacing=6;" vertex="1" parent="1">
+        <mxCell id="0lrkoqPi9YDPyT_f_Kjm-16" value="レンタルコード&lt;br&gt;入力画面" style="whiteSpace=wrap;html=1;rounded=0;shadow=1;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=8;align=center;spacing=6;" vertex="1" parent="1">
           <mxGeometry x="573" y="320" width="120" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="0lrkoqPi9YDPyT_f_Kjm-21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0lrkoqPi9YDPyT_f_Kjm-19" target="0lrkoqPi9YDPyT_f_Kjm-16">
+        <mxCell id="0lrkoqPi9YDPyT_f_Kjm-21" value="持ち" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0lrkoqPi9YDPyT_f_Kjm-19" target="0lrkoqPi9YDPyT_f_Kjm-16">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="0lrkoqPi9YDPyT_f_Kjm-19" value="レンタル&lt;br&gt;希望あり" style="rhombus;whiteSpace=wrap;html=1;rounded=0;shadow=1;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=8;align=center;" vertex="1" parent="1">
+        <mxCell id="0lrkoqPi9YDPyT_f_Kjm-19" value="レンタル&lt;br&gt;コード持ち方" style="rhombus;whiteSpace=wrap;html=1;rounded=0;shadow=1;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=8;align=center;" vertex="1" parent="1">
           <mxGeometry x="583" y="220" width="100" height="60" as="geometry" />
         </mxCell>
         <mxCell id="0lrkoqPi9YDPyT_f_Kjm-25" value="OK" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0lrkoqPi9YDPyT_f_Kjm-23" target="60e70716793133e9-10">
@@ -129,6 +129,16 @@
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="630" y="777" as="sourcePoint" />
             <mxPoint x="630" y="836" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0lrkoqPi9YDPyT_f_Kjm-37" value="持てない" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" edge="1" parent="1" source="0lrkoqPi9YDPyT_f_Kjm-19" target="60e70716793133e9-7">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="730" y="211" as="sourcePoint" />
+            <mxPoint x="740" y="110" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="633" y="110" />
+              <mxPoint x="440" y="110" />
+            </Array>
           </mxGeometry>
         </mxCell>
       </root>
