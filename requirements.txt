@@ -19,3 +19,5 @@ requests~=2.28.1
 vnpy~=3.3.0
 vnpy_mongodb==1.04
 vnpy_ctastrategy==1.11
+vnpy_ctp==3.30
+flask-restful==0.3.9
