@@ -1,11 +1,77 @@
 # -*- coding:utf-8 -*-
+from typing import Dict
 
 from app.api_v1 import api
 
+from ..trader.violin_trader import coordinator
 
-@api.route('/strategies')
+
+@api.route('/strategies', methods=['GET'])
 def get_strategy_list():
-    print("1")
+    """
+    """
+    accounts: Dict = coordinator.query_account()
+
+    return {
+        'strategy_id': accounts,
+        'strategy_name': accounts
+    }
+
+
+@api.route('/strategy/<strategy_id>/load', methods=['GET'])
+def load_strategy(strategy_id):
+    """
+    """
+    return {
+        'strategy_id': 'id_1',
+        'strategy_name': 'name_1'
+    }
+
+
+@api.route('/strategy/<strategy_id>/unload', methods=['GET'])
+def unload_strategy(strategy_id):
+    """
+    """
+    return {
+        'strategy_id': 'id_1',
+        'strategy_name': 'name_1'
+    }
+
+
+@api.route('/strategy/<strategy_id>/start', methods=['GET'])
+def start_strategy(strategy_id):
+    """
+    """
+    return {
+        'strategy_id': 'id_1',
+        'strategy_name': 'name_1'
+    }
+
+
+@api.route('/strategy/<strategy_id>/stop', methods=['GET'])
+def stop_strategy(strategy_id):
+    """
+    """
+    return {
+        'strategy_id': 'id_1',
+        'strategy_name': 'name_1'
+    }
+
+
+@api.route('/strategy', methods=['POST'])
+def upload_strategy():
+    """
+    """
+    return {
+        'strategy_id': 'id_1',
+        'strategy_name': 'name_1'
+    }
+
+
+@api.route('/strategy/<strategy_id>', methods=['DELETE'])
+def remove_strategy(strategy_id):
+    """
+    """
     return {
         'strategy_id': 'id_1',
         'strategy_name': 'name_1'
