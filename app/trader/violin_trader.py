@@ -15,7 +15,10 @@ from vnpy_ctp import CtpGateway
 from vnpy_ctastrategy import CtaStrategyApp, CtaEngine
 from vnpy_ctastrategy.base import EVENT_CTA_LOG
 
-from app.trader.coordinator import Coordinator
+from app.trader import coordinator
+
+if __name__ == '__main__':
+    print("")
 
 SETTINGS["log.active"] = True
 SETTINGS["log.level"] = INFO
@@ -88,8 +91,6 @@ def run_parent():
         sleep(5)
 
 
-global coordinator
-
 def run_child():
     """
     Running in the child process.
@@ -102,8 +103,8 @@ def run_child():
     cta_engine: CtaEngine = main_engine.add_app(CtaStrategyApp)
     main_engine.write_log("主引擎创建成功")
 
-    global coordinator
-    coordinator = Coordinator(main_engine)
+    coordinator.init()
+    coordinator.set_engine(main_engine)
 
     # key_chart = KeyChart()
 
@@ -155,3 +156,5 @@ def run_child():
             print("关闭子进程")
             main_engine.close()
             sys.exit(0)
+
+

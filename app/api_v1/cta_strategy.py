@@ -1,20 +1,21 @@
 # -*- coding:utf-8 -*-
-from typing import Dict
+
+from vnpy.trader.engine import MainEngine
 
 from app.api_v1 import api
 
-from ..trader.violin_trader import coordinator
+from ..trader import coordinator
 
 
 @api.route('/strategies', methods=['GET'])
 def get_strategy_list():
     """
     """
-    accounts: Dict = coordinator.query_account()
+    main_engine: MainEngine = coordinator.get_engine()
 
     return {
-        'strategy_id': accounts,
-        'strategy_name': accounts
+        'strategy_id': 1,
+        'strategy_name': 2
     }
 
 
