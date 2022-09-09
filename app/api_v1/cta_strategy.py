@@ -1,22 +1,21 @@
 # -*- coding:utf-8 -*-
-
-from vnpy.trader.engine import MainEngine
+from typing import Dict
 
 from app.api_v1 import api
-
-from ..trader import coordinator
+from ..trader.violin_trader import run_child
+from ..trader.violin_trader import ApiService
 
 
 @api.route('/strategies', methods=['GET'])
 def get_strategy_list():
     """
     """
-    main_engine: MainEngine = coordinator.get_engine()
 
-    return {
-        'strategy_id': 1,
-        'strategy_name': 2
-    }
+    api_service: ApiService = run_child.__globals__["api_service"]
+
+    accounts: Dict = api_service.query_account()
+
+    return accounts
 
 
 @api.route('/strategy/<strategy_id>/load', methods=['GET'])

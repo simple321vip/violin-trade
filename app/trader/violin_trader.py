@@ -1,5 +1,6 @@
 import multiprocessing
-import sys
+import os
+import platform
 from time import sleep
 from datetime import datetime, time
 from logging import INFO
@@ -14,8 +15,6 @@ from vnpy.trader.engine import MainEngine, OmsEngine
 from vnpy_ctp import CtpGateway
 from vnpy_ctastrategy import CtaStrategyApp, CtaEngine
 from vnpy_ctastrategy.base import EVENT_CTA_LOG
-
-from app.trader import coordinator
 
 if __name__ == '__main__':
     print("")
@@ -40,12 +39,11 @@ ctp_setting = {
     "产品信息": ""
 }
 
-
 # Chinese futures market trading period (day/night)
 DAY_START = time(8, 45)
 DAY_END = time(17, 0)
 
-NIGHT_START = time(20, 45)
+NIGHT_START = time(18, 45)
 NIGHT_END = time(2, 45)
 
 
@@ -55,9 +53,9 @@ def check_trading_period():
 
     trading = False
     if (
-        (DAY_START <= current_time <= DAY_END)
-        or (current_time >= NIGHT_START)
-        or (current_time <= NIGHT_END)
+            (DAY_START <= current_time <= DAY_END)
+            or (current_time >= NIGHT_START)
+            or (current_time <= NIGHT_END)
     ):
         trading = True
 
@@ -91,6 +89,9 @@ def run_parent():
         sleep(5)
 
 
+global api_service
+
+
 def run_child():
     """
     Running in the child process.
@@ -103,11 +104,6 @@ def run_child():
     cta_engine: CtaEngine = main_engine.add_app(CtaStrategyApp)
     main_engine.write_log("主引擎创建成功")
 
-    coordinator.init()
-    coordinator.set_engine(main_engine)
-
-    # key_chart = KeyChart()
-
     log_engine = main_engine.get_engine("log")
     event_engine.register(EVENT_CTA_LOG, log_engine.process_log_event)
     main_engine.write_log("注册日志事件监听")
@@ -116,11 +112,6 @@ def run_child():
     main_engine.write_log("连接CTP接口")
 
     sleep(10)
-
-    oms_engine: OmsEngine = main_engine.get_engine("oms")
-    accounts: Dict = oms_engine.accounts
-    for account in accounts.items():
-        print(account)
 
     req: SubscribeRequest = SubscribeRequest(
         symbol='RM301', exchange=Exchange(Exchange.CZCE)
@@ -142,19 +133,98 @@ def run_child():
     main_engine.write_log("CTA策略初始化完成")
 
     # cta_engine.init_all_strategies()
-    sleep(60)  # Leave enough time to complete strategy initialization
+    # sleep(60)  # Leave enough time to complete strategy initialization
     main_engine.write_log("CTA策略全部初始化")
 
     # cta_engine.start_all_strategies()
     main_engine.write_log("CTA策略全部启动")
 
-    while True:
-        sleep(10)
+    global api_service
+    api_service = ApiService(main_engine, cta_engine)
 
-        trading = check_trading_period()
-        if not trading:
-            print("关闭子进程")
-            main_engine.close()
-            sys.exit(0)
+    return main_engine
+
+    # while True:
+    #     sleep(10)
+    #
+    #     trading = check_trading_period()
+    #     if not trading:
+    #         print("关闭子进程")
+    #         main_engine.close()
+    #         sys.exit(0)
 
 
+class ApiService:
+    main_engine: MainEngine
+    cta_engine: CtaEngine
+    strategy_path: str
+
+    def __init__(self, main_engine: MainEngine, cta_engine: CtaEngine):
+        self.main_engine = main_engine
+        self.cta_engine = cta_engine
+        if platform.system().lower() == 'windows':
+            self.strategy_path = "C:\\violin\\strategy"
+        elif platform.system().lower() == 'linux':
+            self.strategy_path = "/violin/strategy"
+
+    def query_account(self):
+        """
+        query accounts
+        """
+        oms_engine = self.main_engine.get_engine("oms")
+        accounts: Dict = oms_engine.accounts
+        return accounts
+
+    def query_strategies(self):
+        """
+        query strategies from strategy folder
+        """
+        strategy_files: list = os.listdir(self.strategy_path)
+        strategy_names: list[str] = self.cta_engine.get_all_strategy_class_names()
+
+        return strategy_names
+
+    def load_strategy(self, strategy_id: str):
+        """
+        query strategies from strategy folder
+        """
+        strategy_files: list = os.listdir(self.strategy_path)
+        self.cta_engine.add_strategy(strategy_id)
+
+        return
+
+    def unload_strategy(self, strategy_id: str):
+        """
+        query strategies from strategy folder
+        """
+        strategy_files: list = os.listdir(self.strategy_path)
+        # self.cta_engine.(strategy_id)
+
+        return
+
+    def start_strategy(self, strategy_id: str):
+        """
+        query strategies from strategy folder
+        """
+        strategy_files: list = os.listdir(self.strategy_path)
+        self.cta_engine.start_strategy(strategy_id)
+
+        return
+
+    def start_strategy(self, strategy_id: str):
+        """
+        query strategies from strategy folder
+        """
+        strategy_files: list = os.listdir(self.strategy_path)
+        self.cta_engine.stop_strategy(strategy_id)
+
+        return
+
+    def remove_strategy(self, strategy_id: str):
+        """
+        query strategies from strategy folder
+        """
+        strategy_files: list = os.listdir(self.strategy_path)
+        self.cta_engine.remove_strategy(strategy_id)
+
+        return
