@@ -1,4 +1,3 @@
-import multiprocessing
 import os
 import platform
 from time import sleep
@@ -6,6 +5,8 @@ from datetime import datetime, time
 from logging import INFO
 from typing import Dict, List
 
+from pymongo.cursor import Cursor
+from pymongo.database import Database
 from vnpy.event import EventEngine
 from vnpy.trader.constant import Exchange
 from vnpy.trader.object import SubscribeRequest, ContractData
@@ -15,6 +16,7 @@ from vnpy.trader.engine import MainEngine, OmsEngine
 from vnpy_ctp import CtpGateway
 from vnpy_ctastrategy import CtaStrategyApp, CtaEngine
 from vnpy_ctastrategy.base import EVENT_CTA_LOG
+from vnpy_mongodb.mongodb_database import MongodbDatabase
 
 if __name__ == '__main__':
     print("")
@@ -62,33 +64,6 @@ def check_trading_period():
     return trading
 
 
-def run_parent():
-    """
-    Running in the parent process.
-    """
-    print("启动CTA策略守护父进程")
-
-    child_process = None
-
-    while True:
-        trading = check_trading_period()
-
-        # Start child process in trading period
-        if trading and child_process is None:
-            print("启动子进程")
-            child_process = multiprocessing.Process(target=run_child)
-            child_process.start()
-            print("子进程启动成功")
-
-        # 非记录时间则退出子进程
-        if not trading and child_process is not None:
-            if not child_process.is_alive():
-                child_process = None
-                print("子进程关闭成功")
-
-        sleep(5)
-
-
 global api_service
 
 
@@ -100,7 +75,7 @@ def run_child():
 
     event_engine = EventEngine()
     main_engine = MainEngine(event_engine)
-    ctp_gateway: CtpGateway = main_engine.add_gateway(CtpGateway)
+    ctp_gateway = main_engine.add_gateway(CtpGateway)
     cta_engine: CtaEngine = main_engine.add_app(CtaStrategyApp)
     main_engine.write_log("主引擎创建成功")
 
@@ -113,83 +88,78 @@ def run_child():
 
     sleep(10)
 
-    req: SubscribeRequest = SubscribeRequest(
-        symbol='RM301', exchange=Exchange(Exchange.CZCE)
-    )
-    main_engine.subscribe(req, ctp_gateway.gateway_name)
-
-    flt: str = 'RM301'
-
-    all_contracts: List[ContractData] = main_engine.get_all_contracts()
-
-    contracts: List[ContractData] = [
-        contract for contract in all_contracts if flt in contract.vt_symbol
-    ]
-
-    for contract in contracts:
-        print(contract)
-
     cta_engine.init_engine()
-    main_engine.write_log("CTA策略初始化完成")
-
-    # cta_engine.init_all_strategies()
-    # sleep(60)  # Leave enough time to complete strategy initialization
-    main_engine.write_log("CTA策略全部初始化")
-
-    # cta_engine.start_all_strategies()
-    main_engine.write_log("CTA策略全部启动")
 
     global api_service
     api_service = ApiService(main_engine, cta_engine)
 
-    return main_engine
+    """
+    init strategies.
+    """
+    main_engine.write_log("CTA策略 加载开始")
+    database_client: Database = api_service.database_client
+    files: list[str] = os.listdir(api_service.strategy_path)
+    for strategy in database_client.get_collection("t_strategy").find():
+        if files.count(strategy) == 0:
+            database_client.get_collection("t_strategy").delete_one()
+        else:
+            cta_engine.load_strategy_class_from_folder(api_service.strategy_path + strategy)
+            if strategy.get("status") == "start":
+                cta_engine.stop_strategy(strategy)
 
-    # while True:
-    #     sleep(10)
-    #
-    #     trading = check_trading_period()
-    #     if not trading:
-    #         print("关闭子进程")
-    #         main_engine.close()
-    #         sys.exit(0)
+    sleep(60)  # Leave enough time to complete strategy initialization
+    main_engine.write_log("CTA策略全部启动")
 
 
 class ApiService:
     main_engine: MainEngine
     cta_engine: CtaEngine
     strategy_path: str
+    database_client: Database
 
     def __init__(self, main_engine: MainEngine, cta_engine: CtaEngine):
+        """
+        """
         self.main_engine = main_engine
         self.cta_engine = cta_engine
+        self.database_client = self.cta_engine.database.db
+
         if platform.system().lower() == 'windows':
             self.strategy_path = "C:\\violin\\strategy"
         elif platform.system().lower() == 'linux':
             self.strategy_path = "/violin/strategy"
-
-    def query_account(self):
-        """
-        query accounts
-        """
-        oms_engine = self.main_engine.get_engine("oms")
-        accounts: Dict = oms_engine.accounts
-        return accounts
 
     def query_strategies(self):
         """
         query strategies from strategy folder
         """
         strategy_files: list = os.listdir(self.strategy_path)
-        strategy_names: list[str] = self.cta_engine.get_all_strategy_class_names()
+        strategy_list: list[Dict] = []
 
-        return strategy_names
+        collection = self.database_client.get_collection("t_strategy")
+        result: Cursor = collection.find()
+        for strategy_file in strategy_files:
+            strategy: Dict = {
+                "strategy_name": strategy_file,
+                "strategy_alise_name": strategy_file,
+                "status": "unload"
+            }
+            if result.get(strategy_file):
+                strategy['strategy_alise_name'] = ""
+                strategy['status'] = ""
+
+            strategy_list.append(strategy)
+
+        return strategy_list
 
     def load_strategy(self, strategy_id: str):
         """
         query strategies from strategy folder
         """
         strategy_files: list = os.listdir(self.strategy_path)
-        self.cta_engine.add_strategy(strategy_id)
+        self.cta_engine.load_strategy_class_from_folder(self.strategy_path)
+        collection = self.database_client.get_collection("t_strategy")
+        result: Cursor = collection.insert_one()
 
         return
 
@@ -228,3 +198,35 @@ class ApiService:
         self.cta_engine.remove_strategy(strategy_id)
 
         return
+
+    def query_contracts(self):
+
+        # req: SubscribeRequest = SubscribeRequest(
+        #     symbol='RM301', exchange=Exchange(Exchange.CZCE)
+        # )
+        # main_engine.subscribe(req, ctp_gateway.gateway_name)
+
+        flt: str = 'RM301'
+
+        all_contracts: List[ContractData] = self.main_engine.get_all_contracts()
+
+        contracts: List[ContractData] = [
+            contract for contract in all_contracts if flt in contract.vt_symbol
+        ]
+
+        for contract in contracts:
+            print(contract)
+        pass
+
+    def close_contract(self, contract_id: str):
+        """
+        """
+        pass
+
+    def query_account(self):
+        """
+        query accounts
+        """
+        oms_engine = self.main_engine.get_engine("oms")
+        accounts: Dict = oms_engine.accounts
+        return accounts
