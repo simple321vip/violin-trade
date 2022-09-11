@@ -1,81 +1,136 @@
 # -*- coding:utf-8 -*-
-from typing import Dict
+from flask import request
 
 from app.api_v1 import api
 from ..trader.violin_trader import run_child
 from ..trader.violin_trader import ApiService
 
 
+@api.route('/strategy_file', methods=['GET'])
+def get_strategy_file_list():
+    """
+    """
+    xx = request
+    api_service: ApiService = run_child.__globals__["api_service"]
+    strategy_list = api_service.query_strategies()
+
+    return strategy_list
+
+
+@api.route('/strategy_file', methods=['POST'])
+def upload_strategy_file():
+    """
+    """
+    file = request.files.get("file")
+    if file.filename.endswith(".py"):
+
+        api_service: ApiService = run_child.__globals__["api_service"]
+        file_name = api_service.upload_strategy(file)
+        if file_name:
+            return {
+                'file_name': file_name
+                   }, 200
+        else:
+            return {
+                       'error_message': '该文件已经存'
+                   }, 500
+
+    else:
+        return {
+            'error_message': '上传的策略文件只能py文件'
+        }, 500
+
+
+@api.route('/strategy_file/<file_name>', methods=['PUT'])
+def load_strategy_file(file_name):
+    """
+    """
+    api_service: ApiService = run_child.__globals__["api_service"]
+    if api_service.load_strategy(file_name):
+        return {}, 200
+    else:
+        return {
+                   'error_message': '策略文件加载失败'
+               }, 500
+
+
+@api.route('/strategy_file/<class_name>', methods=['PATCH'])
+def unload_strategy_file(class_name):
+    """
+    """
+    api_service: ApiService = run_child.__globals__["api_service"]
+    if api_service.unload_strategy(class_name):
+        return 200
+    else:
+        return 500
+
+
+@api.route('/strategy_file/<file_name>', methods=['DELETE'])
+def remove_strategy_file(file_name):
+    """
+    """
+    api_service: ApiService = run_child.__globals__["api_service"]
+    if api_service.remove_strategy(file_name):
+        return {}, 200
+
+    return {
+               'error_message': '策略文件移除失败'
+           }, 500
+
+
 @api.route('/strategies', methods=['GET'])
 def get_strategy_list():
     """
     """
-
     api_service: ApiService = run_child.__globals__["api_service"]
+    strategy_list = api_service.get_strategy_instances()
 
-    accounts: Dict = api_service.query_account()
-
-    return accounts
+    return strategy_list
 
 
-@api.route('/strategy/<strategy_id>/load', methods=['GET'])
-def load_strategy(strategy_id):
+@api.route('/strategy/<strategy_name>', methods=['POST'])
+def create_strategy(strategy_name):
     """
     """
-    return {
-        'strategy_id': 'id_1',
-        'strategy_name': 'name_1'
-    }
+    api_service: ApiService = run_child.__globals__["api_service"]
+    api_service.create_strategy_instance()
+    return 200
 
 
-@api.route('/strategy/<strategy_id>/unload', methods=['GET'])
-def unload_strategy(strategy_id):
+@api.route('/strategy/<strategy_name>/start', methods=['PUT'])
+def start_strategy(strategy_name):
     """
     """
-    return {
-        'strategy_id': 'id_1',
-        'strategy_name': 'name_1'
-    }
+    api_service: ApiService = run_child.__globals__["api_service"]
+    api_service.start_strategy_instance(strategy_name)
+    return 200
 
 
-@api.route('/strategy/<strategy_id>/start', methods=['GET'])
-def start_strategy(strategy_id):
+@api.route('/strategy/<strategy_name>/stop', methods=['PATCH'])
+def stop_strategy(strategy_name):
     """
     """
-    return {
-        'strategy_id': 'id_1',
-        'strategy_name': 'name_1'
-    }
+    api_service: ApiService = run_child.__globals__["api_service"]
+    api_service.stop_strategy_instance(strategy_name)
+    return 200
 
 
-@api.route('/strategy/<strategy_id>/stop', methods=['GET'])
-def stop_strategy(strategy_id):
+@api.route('/strategy/<strategy_name>/stop', methods=['DELETE'])
+def remove_strategy(strategy_name):
     """
     """
-    return {
-        'strategy_id': 'id_1',
-        'strategy_name': 'name_1'
-    }
+    api_service: ApiService = run_child.__globals__["api_service"]
+    api_service.remove_strategy_instance(strategy_name)
+    return 200
 
 
-@api.route('/strategy', methods=['POST'])
-def upload_strategy():
+@api.route('/strategy/status/<strategy_name>', methods=['GET'])
+def get_strategy_status(strategy_name):
     """
     """
-    return {
-        'strategy_id': 'id_1',
-        'strategy_name': 'name_1'
-    }
-
-
-@api.route('/strategy/<strategy_id>', methods=['DELETE'])
-def remove_strategy(strategy_id):
-    """
-    """
-    return {
-        'strategy_id': 'id_1',
-        'strategy_name': 'name_1'
-    }
+    api_service: ApiService = run_child.__globals__["api_service"]
+    api_service.remove_strategy_instance(strategy_name)
+    return 200
 
 #
 # @api.route('/strategy')
