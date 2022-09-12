@@ -137,7 +137,7 @@ def run_child():
 
     # 读取数据库保存的文件
     for strategy_class in t_strategy_class.find():
-        if files.count(strategy_class.get('file_name')) == 0:
+        if files.count(strategy_class.get('file_name') + '.py') == 0:
             t_strategy_class.delete_one({"file_name": strategy_class.get("file_name")})
         else:
             module_name: str = f"strategies." + strategy_class.get("file_name")
@@ -198,23 +198,44 @@ class ApiService:
             filename = Path(filepath).stem
             strategy_files.append(filename)
 
-        strategy_list: list[Dict] = []
+        strategy_file_list: list[Dict] = []
 
         collection = self.database_client.get_collection("t_strategy_class")
-        for strategy_file in strategy_files:
-            strategy: Dict = {
-                "file_name": strategy_file,
+        results = collection.find()
+        for file_name in strategy_files:
+            strategy_file: Dict = {
+                "file_name": file_name,
                 "class_name": "",
                 "status": 0
             }
-            for strategy in collection.find():
-                if strategy_file == strategy.get("file_name"):
-                    strategy['class_name'] = strategy.get("class_name")
-                    strategy['status'] = 1
+            for row in results:
+                if file_name == row.get("file_name"):
+                    strategy_file['class_name'] = row.get("class_name")
+                    strategy_file['status'] = 1
 
-            strategy_list.append(strategy)
+            strategy_file_list.append(strategy_file)
 
-        return strategy_list
+        return strategy_file_list
+
+    def query_strategy_load_files(self) -> Dict:
+        """
+        query strategies with strategy file's extension equals '.py' from strategy folder
+        """
+        pathname: str = str(self.strategy_path.joinpath(f"*.py"))
+        strategy_files: list = []
+        for filepath in glob(pathname):
+            filename = Path(filepath).stem
+            strategy_files.append(filename)
+
+        strategy_file_list: list[str] = []
+
+        collection = self.database_client.get_collection("t_strategy_class")
+        for row in collection.find():
+            file_name = row.get("file_name")
+            if strategy_files.count(file_name) != 0:
+                strategy_file_list.append(row.get('class_name'))
+
+        return {'class_names': strategy_file_list}
 
     def load_strategy(self, strategy_file_name: str):
         """
@@ -312,7 +333,7 @@ class ApiService:
             }
         )
 
-        return
+        return class_name
 
     def init_strategy_instance(self, strategy_name: str):
         """
@@ -325,11 +346,13 @@ class ApiService:
                 'strategy_name': strategy_name
             },
             update={
-                'status': 1
+                '$set': {
+                    'status': 1
+                }
             }
         )
 
-        return
+        return strategy_name
 
     def start_strategy_instance(self, strategy_name: str):
         """
@@ -342,11 +365,13 @@ class ApiService:
                 'strategy_name': strategy_name
             },
             update={
-                'status': 2
+                '$set': {
+                    'status': 2
+                }
             }
         )
 
-        return
+        return strategy_name
 
     def stop_strategy_instance(self, strategy_name: str):
         """
@@ -359,10 +384,12 @@ class ApiService:
                 'strategy_name': strategy_name
             },
             update={
-                'status': 3
+                '$set': {
+                    'status': 3
+                }
             }
         )
-        return
+        return strategy_name
 
     def remove_strategy_instance(self, strategy_name: str):
         """
@@ -375,6 +402,30 @@ class ApiService:
                 'strategy_name': strategy_name
             }
         )
+        return strategy_name
+
+    def get_strategy_status(self, strategy_name: str):
+        """
+        to get a strategy status by strategy_name
+        """
+        collection = self.database_client.get_collection("t_strategy")
+        t_strategy = collection.find_one(
+            {
+                'strategy_name': strategy_name
+            }
+        )
+        return t_strategy.get("status")
+
+    def get_strategy_vt_symbols(self):
+        """
+        to query available symbols.
+        """
+        # collection = self.database_client.get_collection("t_strategy")
+        # collection.delete_one(
+        #     {
+        #         'strategy_name': strategy_name
+        #     }
+        # )
         return
 
     def query_contracts(self):

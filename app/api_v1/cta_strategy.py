@@ -1,5 +1,8 @@
 # -*- coding:utf-8 -*-
+from typing import Dict
+
 from flask import request
+from flask import jsonify
 
 from app.api_v1 import api
 from ..trader.violin_trader import run_child
@@ -10,11 +13,20 @@ from ..trader.violin_trader import ApiService
 def get_strategy_file_list():
     """
     """
-    xx = request
     api_service: ApiService = run_child.__globals__["api_service"]
-    strategy_list = api_service.query_strategies()
+    strategy_file_list = api_service.query_strategy_files()
 
-    return strategy_list
+    return strategy_file_list
+
+
+@api.route('/strategy_file/load', methods=['GET'])
+def get_strategy_load_file_list():
+    """
+    """
+    api_service: ApiService = run_child.__globals__["api_service"]
+    class_names = api_service.query_strategy_load_files()
+
+    return class_names
 
 
 @api.route('/strategy_file', methods=['POST'])
@@ -92,36 +104,58 @@ def get_strategy_list():
 def create_strategy(strategy_name):
     """
     """
+    class_name = request.json.get('class_name')
+    vt_symbol = request.json.get('vt_symbol')
+    setting: Dict = request.json.get('setting')
     api_service: ApiService = run_child.__globals__["api_service"]
-    api_service.create_strategy_instance()
-    return 200
+    strategy_name = api_service.create_strategy_instance(class_name, strategy_name, vt_symbol, setting)
+    if strategy_name:
+        return jsonify({"code": 100, "message": "success"})
+    return jsonify({"code": 101, "message": "failure"})
 
 
-@api.route('/strategy/<strategy_name>/start', methods=['PUT'])
+@api.route('/strategy/init/<strategy_name>', methods=['PUT'])
+def init_strategy(strategy_name):
+    """
+    """
+    api_service: ApiService = run_child.__globals__["api_service"]
+    strategy_name = api_service.init_strategy_instance(strategy_name)
+    if strategy_name:
+        return jsonify({"code": 100, "message": "success"})
+    return jsonify({"code": 101, "message": "failure"})
+
+
+@api.route('/strategy/<strategy_name>', methods=['PUT'])
 def start_strategy(strategy_name):
     """
     """
     api_service: ApiService = run_child.__globals__["api_service"]
-    api_service.start_strategy_instance(strategy_name)
-    return 200
+    strategy_name = api_service.start_strategy_instance(strategy_name)
+    if strategy_name:
+        return jsonify({"code": 100, "message": "success"})
+    return jsonify({"code": 101, "message": "failure"})
 
 
-@api.route('/strategy/<strategy_name>/stop', methods=['PATCH'])
+@api.route('/strategy/<strategy_name>', methods=['PATCH'])
 def stop_strategy(strategy_name):
     """
     """
     api_service: ApiService = run_child.__globals__["api_service"]
-    api_service.stop_strategy_instance(strategy_name)
-    return 200
+    strategy_name = api_service.stop_strategy_instance(strategy_name)
+    if strategy_name:
+        return jsonify({"code": 100, "message": "success"})
+    return jsonify({"code": 101, "message": "failure"})
 
 
-@api.route('/strategy/<strategy_name>/stop', methods=['DELETE'])
+@api.route('/strategy/<strategy_name>', methods=['DELETE'])
 def remove_strategy(strategy_name):
     """
     """
     api_service: ApiService = run_child.__globals__["api_service"]
-    api_service.remove_strategy_instance(strategy_name)
-    return 200
+    strategy_name = api_service.remove_strategy_instance(strategy_name)
+    if strategy_name:
+        return jsonify({"code": 100, "message": "success"})
+    return jsonify({"code": 101, "message": "failure"})
 
 
 @api.route('/strategy/status/<strategy_name>', methods=['GET'])
@@ -129,43 +163,19 @@ def get_strategy_status(strategy_name):
     """
     """
     api_service: ApiService = run_child.__globals__["api_service"]
-    api_service.remove_strategy_instance(strategy_name)
-    return 200
+    status = api_service.get_strategy_status(strategy_name)
+    return {'status': status}
 
-#
-# @api.route('/strategy')
-# @auth.login_required
-# def get_strategy_list():
-#     posts = Post.query.all()
-#     return jsonify({
-#         'posts': [post.to_json() for post in posts]
-#     })
-#
-#
-# @api.route('/trader/api/v1/<int:id>', methods=['PUT'])
-# @auth.login_required
-# def upload_strategy():
-#     post = Post.query.get_or_404(id)
-#     return jsonify(post.to_json())
-#
-#
-# @api.route('/trader/api/v1/', methods=['POST'])
-# @permission_required(Permission.WRITE_ARTICLES)
-# def new_post():
-#     post = Post.from_json(request.json)
-#     post.author = g.current_user
-#     db.session.add(post)
-#     db.session.commit()
-#     return jsonify(post.to_json()), 201, \
-#            {'Location': url_for('api.get_post', id=post.id, _external=True)}
-#
-#
-# @api.route('/posts/<int:id>', methods=['PUT'])
-# @permission_required(Permission.WRITE_ARTICLES)
-# def edit_post(id):
-#     post = Post.query.get_or_404(id)
-#     if g.current_user != post.author and not g.current_user.can(Permission.ADMINISTER):
-#         return forbidden('Insufficient permissions')
-#     post.body = request.json.get('body', post.body)
-#     db.session.add(post)
-#     return jsonify(post.to_json())
+
+@api.route('/strategy/vt_symbols', methods=['GET'])
+def get_strategy_vt_symbols():
+    """
+    """
+    api_service: ApiService = run_child.__globals__["api_service"]
+    # vt_symbols = api_service.get_strategy_vt_symbols()
+    vt_symbols = {
+        'vt_symbols': ['RM301.CZCE', 'RM303.CZCE']
+    }
+    return vt_symbols
+
+
