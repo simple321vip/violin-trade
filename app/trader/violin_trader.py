@@ -13,8 +13,9 @@ from typing import Dict, List
 from pymongo.collection import Collection
 from pymongo.database import Database
 from vnpy.event import EventEngine
-from vnpy.trader.engine import MainEngine
-from vnpy.trader.object import ContractData
+from vnpy.trader.constant import Exchange, OrderType, Offset, Direction
+from vnpy.trader.engine import MainEngine, OmsEngine
+from vnpy.trader.object import ContractData, AccountData, OrderRequest
 from vnpy.trader.setting import SETTINGS
 from vnpy_ctastrategy import CtaStrategyApp, CtaEngine, CtaTemplate
 from vnpy_ctastrategy.base import EVENT_CTA_LOG
@@ -428,34 +429,68 @@ class ApiService:
         # )
         return
 
-    def query_contracts(self):
+    def query_contract(self, symbol: str):
 
         # req: SubscribeRequest = SubscribeRequest(
         #     symbol='RM301', exchange=Exchange(Exchange.CZCE)
         # )
         # main_engine.subscribe(req, ctp_gateway.gateway_name)
-
-        flt: str = 'RM301'
+        _, symbol = symbol.split(".")
+        flt = symbol
 
         all_contracts: List[ContractData] = self.main_engine.get_all_contracts()
 
         contracts: List[ContractData] = [
             contract for contract in all_contracts if flt in contract.vt_symbol
         ]
-
-        for contract in contracts:
-            print(contract)
-        pass
+        return contracts
 
     def close_contract(self, contract_id: str):
         """
         """
+        oms_engine: OmsEngine = self.main_engine.get_engine("oms")
+        self.cta_engine.send_order()
+        # oms_engine.
+
+
         pass
+
+    def send_order(self, vt_symbol: str, direction, offset, volume, price) -> str:
+        """
+        Send new order manually.
+        """
+        symbol, exchange = vt_symbol.split(".")
+
+        req: OrderRequest = OrderRequest(
+            symbol=symbol,
+            exchange=Exchange(exchange),
+            direction=Direction(direction),
+            type=OrderType.MARKET,
+            volume=float(volume),
+            price=float(price),
+            offset=Offset(offset),
+            reference="ManualTrading"
+        )
+
+        order_id = self.main_engine.send_order(req, "CTP")
+        return order_id
 
     def query_account(self):
         """
         query accounts
         """
-        oms_engine = self.main_engine.get_engine("oms")
+        oms_engine: OmsEngine = self.main_engine.get_engine("oms")
         accounts: Dict = oms_engine.accounts
-        return accounts
+
+        if accounts:
+            account_key, _ = accounts.keys()
+            account_value: AccountData = accounts.get(account_key)
+            account = {
+                'gateway_name': account_value.gateway_name,
+                'account_id': account_value.accountid,
+                'balance': account_value.balance,
+                'frozen': account_value.frozen
+            }
+            return account
+
+        return

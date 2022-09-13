@@ -177,5 +177,3 @@ def get_strategy_vt_symbols():
         'vt_symbols': ['RM301.CZCE', 'RM303.CZCE']
     }
     return vt_symbols
-
-
