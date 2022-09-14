@@ -15,7 +15,8 @@ from pymongo.database import Database
 from vnpy.event import EventEngine
 from vnpy.trader.constant import Exchange, OrderType, Offset, Direction
 from vnpy.trader.engine import MainEngine, OmsEngine
-from vnpy.trader.object import ContractData, AccountData, OrderRequest, TickData, SubscribeRequest
+from vnpy.trader.object import ContractData, AccountData, OrderRequest, TickData, SubscribeRequest, PositionData, \
+    OrderData, TradeData
 from vnpy.trader.setting import SETTINGS
 from vnpy_ctastrategy import CtaStrategyApp, CtaEngine, CtaTemplate
 from vnpy_ctastrategy.base import EVENT_CTA_LOG
@@ -474,20 +475,82 @@ class ApiService:
         """
         query accounts
         """
-        accounts: Dict = self.oms_engine.accounts
-
-        if accounts:
-            account_key = list(accounts.keys()).pop()
-            account_value: AccountData = accounts.get(account_key)
+        accounts_data: Dict = self.oms_engine.accounts
+        accounts = []
+        if accounts_data:
+            account_key = list(accounts_data.keys()).pop()
+            account_value: AccountData = accounts_data.get(account_key)
             account = {
                 'gateway_name': account_value.gateway_name,
                 'account_id': account_value.accountid,
                 'balance': account_value.balance,
                 'frozen': account_value.frozen
             }
-            return account
+            accounts.append(account)
 
-        return
+        positions_data: Dict = self.oms_engine.positions
+        positions = []
+        if positions_data:
+            for position_key in list(positions_data.keys()):
+                position_value: PositionData = positions_data.get(position_key)
+                position = {
+                    'symbol': position_value.symbol,
+                    'exchange': position_value.exchange.value,
+                    'direction': position_value.direction.value,
+                    'volume': position_value.volume,
+                    'frozen': position_value.frozen,
+                    'price': position_value.price,
+                    'pnl': position_value.pnl,
+                    'yd_volume': position_value.yd_volume
+                }
+                positions.append(position)
+
+        orders_data: Dict = self.oms_engine.orders
+        orders = []
+        if orders_data:
+            for order_key in orders_data:
+                order_value: OrderData = orders_data.get(order_key)
+                order = {
+                    'symbol': order_value.symbol,
+                    'exchange': order_value.exchange.value,
+                    'direction': order_value.direction.value,
+                    'volume': order_value.volume,
+                    'price': order_value.price,
+                    'orderid': order_value.orderid,
+                    'type': order_value.type.value,
+                    'offset': order_value.offset.value,
+                    'traded': order_value.traded,
+                    'status': order_value.status.value,
+                    'datetime': order_value.datetime,
+                    'reference': order_value.reference
+                }
+                orders.append(order)
+
+        trades_data: Dict = self.oms_engine.trades
+        trades = []
+        if trades_data:
+            for trade_key in trades_data:
+                trade_value: TradeData = trades_data.get(trade_key)
+                trade = {
+                    'symbol': trade_value.symbol,
+                    'exchange': trade_value.exchange.value,
+                    'direction': trade_value.direction.value,
+                    'volume': trade_value.volume,
+                    'price': trade_value.price,
+                    'orderid': trade_value.vt_orderid,
+                    'tradeid': trade_value.tradeid,
+                    'offset': trade_value.offset.value,
+                    'datetime': trade_value.datetime,
+                }
+                trades.append(trade)
+
+        result = {
+            'accounts': accounts,
+            'positions': positions,
+            'orders': orders,
+            'trades': trades
+        }
+        return result
 
     def get_tick(self, vt_symbol: str):
         """
@@ -497,7 +560,7 @@ class ApiService:
 
             tick = {
                 'symbol': optional.symbol,
-                'exchange': optional.exchange,
+                'exchange': optional.exchange.value,
                 'name': optional.name,
                 'volume': optional.volume,
                 'turnover': optional.turnover,
@@ -536,7 +599,7 @@ class ApiService:
             if optional:
                 tick = {
                     'symbol': optional.symbol,
-                    'exchange': optional.exchange,
+                    'exchange': optional.exchange.value,
                     'name': optional.name,
                     'volume': optional.volume,
                     'turnover': optional.turnover,
@@ -576,7 +639,7 @@ class ApiService:
                 'vt_symbol': vt_symbol
             })
         if result:
-            return
+            return result
         return
 
     def get_subscribe_vt_symbols(self) -> []:

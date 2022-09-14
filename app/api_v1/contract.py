@@ -70,8 +70,7 @@ def subscribe(vt_symbol: str):
     """
     """
     api_service: ApiService = run_child.__globals__["api_service"]
-    api_service.subscribe(vt_symbol)
-    return
+    return api_service.subscribe(vt_symbol)
 
 
 @api.route('/subscribe/vt_symbols', methods=['GET'])
