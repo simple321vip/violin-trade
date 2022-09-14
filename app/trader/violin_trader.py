@@ -8,14 +8,14 @@ from logging import INFO
 from pathlib import Path
 from time import sleep
 from types import MethodType, ModuleType
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from pymongo.collection import Collection
 from pymongo.database import Database
 from vnpy.event import EventEngine
 from vnpy.trader.constant import Exchange, OrderType, Offset, Direction
 from vnpy.trader.engine import MainEngine, OmsEngine
-from vnpy.trader.object import ContractData, AccountData, OrderRequest
+from vnpy.trader.object import ContractData, AccountData, OrderRequest, TickData, SubscribeRequest
 from vnpy.trader.setting import SETTINGS
 from vnpy_ctastrategy import CtaStrategyApp, CtaEngine, CtaTemplate
 from vnpy_ctastrategy.base import EVENT_CTA_LOG
@@ -167,6 +167,17 @@ def run_child():
                 cta_engine.init_strategy(strategy.get("strategy_name"))
                 cta_engine.start_strategy(strategy.get("strategy_name"))
 
+    """
+    subscribe vt_symbol
+    """
+    results = database_client.get_collection("t_subscribe").find()
+    for result in results:
+        symbol, exchange = result.get("vt_symbol").split(".")
+        req: SubscribeRequest = SubscribeRequest(
+            symbol=symbol, exchange=Exchange(exchange)
+        )
+        main_engine.subscribe(req, "CTP")
+
     sleep(6)  # Leave enough time to complete strategy initialization
     main_engine.write_log("CTA策略全部启动")
 
@@ -174,6 +185,7 @@ def run_child():
 class ApiService:
     main_engine: MainEngine
     cta_engine: CtaEngine
+    oms_engine: OmsEngine
     strategy_path: Path
     database_client: Database
 
@@ -182,6 +194,7 @@ class ApiService:
         """
         self.main_engine = main_engine
         self.cta_engine = cta_engine
+        self.oms_engine = main_engine.get_engine("oms")
         self.database_client = self.cta_engine.database.db
 
         if platform.system().lower() == 'windows':
@@ -417,43 +430,25 @@ class ApiService:
         )
         return t_strategy.get("status")
 
-    def get_strategy_vt_symbols(self):
-        """
-        to query available symbols.
-        """
-        # collection = self.database_client.get_collection("t_strategy")
-        # collection.delete_one(
-        #     {
-        #         'strategy_name': strategy_name
-        #     }
-        # )
-        return
-
     def query_contract(self, symbol: str):
-
-        # req: SubscribeRequest = SubscribeRequest(
-        #     symbol='RM301', exchange=Exchange(Exchange.CZCE)
-        # )
-        # main_engine.subscribe(req, ctp_gateway.gateway_name)
-        _, symbol = symbol.split(".")
+        symbol, _ = symbol.split(".")
         flt = symbol
 
-        all_contracts: List[ContractData] = self.main_engine.get_all_contracts()
-
+        all_contracts: List[ContractData] = self.oms_engine.get_all_contracts()
         contracts: List[ContractData] = [
             contract for contract in all_contracts if flt in contract.vt_symbol
         ]
-        return contracts
+        if contracts:
+            contract_data: ContractData = contracts.pop()
+            contract = {
+                'vt_symbol': contract_data.vt_symbol,
+                'name': contract_data.name,
+                'pricetick': contract_data.pricetick,
+                'size': contract_data.size
+            }
+            return contract
 
-    def close_contract(self, contract_id: str):
-        """
-        """
-        oms_engine: OmsEngine = self.main_engine.get_engine("oms")
-        self.cta_engine.send_order()
-        # oms_engine.
-
-
-        pass
+        return
 
     def send_order(self, vt_symbol: str, direction, offset, volume, price) -> str:
         """
@@ -479,11 +474,10 @@ class ApiService:
         """
         query accounts
         """
-        oms_engine: OmsEngine = self.main_engine.get_engine("oms")
-        accounts: Dict = oms_engine.accounts
+        accounts: Dict = self.oms_engine.accounts
 
         if accounts:
-            account_key, _ = accounts.keys()
+            account_key = list(accounts.keys()).pop()
             account_value: AccountData = accounts.get(account_key)
             account = {
                 'gateway_name': account_value.gateway_name,
@@ -494,3 +488,131 @@ class ApiService:
             return account
 
         return
+
+    def get_tick(self, vt_symbol: str):
+        """
+        """
+        optional: Optional[TickData] = self.oms_engine.get_tick(vt_symbol)
+        if optional:
+
+            tick = {
+                'symbol': optional.symbol,
+                'exchange': optional.exchange,
+                'name': optional.name,
+                'volume': optional.volume,
+                'turnover': optional.turnover,
+                'open_interest': optional.open_interest,
+                'last_price': optional.last_price,
+                'last_volume': optional.last_volume,
+                'limit_up': optional.limit_up,
+                'limit_down': optional.limit_down,
+                'open_price': optional.open_price,
+                'high_price': optional.high_price,
+                'low_price': optional.low_price,
+                'pre_close': optional.pre_close,
+                'bid_price_1': optional.bid_price_1,
+                'bid_price_2': optional.bid_price_2,
+                'bid_price_3': optional.bid_price_3,
+                'bid_price_4': optional.bid_price_4,
+                'bid_price_5': optional.bid_price_5,
+                'ask_price_1': optional.ask_price_1,
+                'ask_price_2': optional.ask_price_2,
+                'ask_price_3': optional.ask_price_3,
+                'ask_price_4': optional.ask_price_4,
+                'ask_price_5': optional.ask_price_5
+            }
+
+            return {'tick': tick}
+        return
+
+    def get_ticks(self) -> []:
+        """
+        """
+        collection = self.database_client.get_collection("t_subscribe").find()
+        ticks = []
+        for doc in collection:
+            vt_symbol = doc.get('vt_symbol')
+            optional: Optional[TickData] = self.oms_engine.get_tick(vt_symbol)
+            if optional:
+                tick = {
+                    'symbol': optional.symbol,
+                    'exchange': optional.exchange,
+                    'name': optional.name,
+                    'volume': optional.volume,
+                    'turnover': optional.turnover,
+                    'open_interest': optional.open_interest,
+                    'last_price': optional.last_price,
+                    'last_volume': optional.last_volume,
+                    'limit_up': optional.limit_up,
+                    'limit_down': optional.limit_down,
+                    'open_price': optional.open_price,
+                    'high_price': optional.high_price,
+                    'low_price': optional.low_price,
+                    'pre_close': optional.pre_close,
+                    'bid_price_1': optional.bid_price_1,
+                    'bid_price_2': optional.bid_price_2,
+                    'bid_price_3': optional.bid_price_3,
+                    'bid_price_4': optional.bid_price_4,
+                    'bid_price_5': optional.bid_price_5,
+                    'ask_price_1': optional.ask_price_1,
+                    'ask_price_2': optional.ask_price_2,
+                    'ask_price_3': optional.ask_price_3,
+                    'ask_price_4': optional.ask_price_4,
+                    'ask_price_5': optional.ask_price_5
+                }
+                ticks.append(tick)
+        return ticks
+
+    def subscribe(self, vt_symbol: str):
+        """
+        """
+        symbol, exchange = vt_symbol.split(".")
+        req: SubscribeRequest = SubscribeRequest(
+            symbol=symbol, exchange=Exchange(exchange)
+        )
+        self.main_engine.subscribe(req, "CTP")
+        t_subscribe = self.database_client.get_collection("t_subscribe")
+        result = t_subscribe.insert_one({
+                'vt_symbol': vt_symbol
+            })
+        if result:
+            return
+        return
+
+    def get_subscribe_vt_symbols(self) -> []:
+        """
+        to query available symbols.
+        """
+        collection = self.database_client.get_collection("t_subscribe").find()
+        vt_symbols = []
+        for doc in collection:
+            vt_symbol = doc.get('vt_symbol')
+            vt_symbols.append(vt_symbol)
+
+        return {'vt_symbols': vt_symbols}
+
+    def get_all_vt_symbols(self) -> []:
+        """
+        to query available symbols.
+        """
+        exchanges = self.get_exchanges()
+        vt_symbols: Dict = {}
+        for exchange in exchanges.get('exchanges'):
+            vt_symbols[exchange] = []
+
+        all_contracts: List[ContractData] = self.oms_engine.get_all_contracts()
+        for contract_data in all_contracts:
+            symbol, exchange = contract_data.vt_symbol.split(".")
+            dict_tmp: list = vt_symbols.get(exchange)
+            dict_tmp.append(contract_data.vt_symbol)
+
+        return {'vt_symbols': vt_symbols}
+
+    def get_exchanges(self) -> []:
+        """
+        to query exchanges.
+        """
+        exchanges = []
+        for exchange in self.main_engine.exchanges:
+            exchanges.append(exchange.value)
+        return {'exchanges': exchanges}

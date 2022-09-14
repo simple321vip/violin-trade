@@ -165,15 +165,3 @@ def get_strategy_status(strategy_name):
     api_service: ApiService = run_child.__globals__["api_service"]
     status = api_service.get_strategy_status(strategy_name)
     return {'status': status}
-
-
-@api.route('/strategy/vt_symbols', methods=['GET'])
-def get_strategy_vt_symbols():
-    """
-    """
-    api_service: ApiService = run_child.__globals__["api_service"]
-    # vt_symbols = api_service.get_strategy_vt_symbols()
-    vt_symbols = {
-        'vt_symbols': ['RM301.CZCE', 'RM303.CZCE']
-    }
-    return vt_symbols
