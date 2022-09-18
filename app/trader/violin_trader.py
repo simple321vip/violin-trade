@@ -209,28 +209,21 @@ class ApiService:
         """
         pathname: str = str(self.strategy_path.joinpath(f"*.py"))
         strategy_files: list = []
-        for filepath in glob(pathname):
-            filename = Path(filepath).stem
-            strategy_files.append(filename)
-
-        strategy_file_list: list[Dict] = []
-
         collection = self.database_client.get_collection("t_strategy_class")
-        results = collection.find()
-        for file_name in strategy_files:
+        results = list(collection.find())
+        for filepath in glob(pathname):
+            file_name = Path(filepath).stem
             strategy_file: Dict = {
                 "file_name": file_name,
                 "class_name": "",
                 "status": 0
             }
             for row in results:
-                if file_name == row.get("file_name"):
+                if row.get("file_name") == file_name:
                     strategy_file['class_name'] = row.get("class_name")
                     strategy_file['status'] = 1
-
-            strategy_file_list.append(strategy_file)
-
-        return strategy_file_list
+            strategy_files.append(strategy_file)
+        return strategy_files
 
     def query_strategy_load_files(self) -> Dict:
         """
@@ -471,7 +464,7 @@ class ApiService:
         order_id = self.main_engine.send_order(req, "CTP")
         return order_id
 
-    def query_account(self):
+    def query_account(self) -> Dict:
         """
         query accounts
         """
@@ -552,7 +545,7 @@ class ApiService:
         }
         return result
 
-    def get_tick(self, vt_symbol: str):
+    def get_tick(self, vt_symbol: str) -> Dict:
         """
         """
         optional: Optional[TickData] = self.oms_engine.get_tick(vt_symbol)
@@ -586,7 +579,7 @@ class ApiService:
             }
 
             return {'tick': tick}
-        return
+        return {'tick': None}
 
     def get_ticks(self) -> []:
         """
@@ -642,7 +635,7 @@ class ApiService:
             return result
         return
 
-    def get_subscribe_vt_symbols(self) -> []:
+    def get_subscribe_vt_symbols(self) -> Dict:
         """
         to query available symbols.
         """
@@ -654,7 +647,7 @@ class ApiService:
 
         return {'vt_symbols': vt_symbols}
 
-    def get_all_vt_symbols(self) -> []:
+    def get_all_vt_symbols(self) -> Dict:
         """
         to query available symbols.
         """
@@ -671,7 +664,7 @@ class ApiService:
 
         return {'vt_symbols': vt_symbols}
 
-    def get_exchanges(self) -> []:
+    def get_exchanges(self) -> Dict:
         """
         to query exchanges.
         """

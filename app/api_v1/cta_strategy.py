@@ -14,9 +14,9 @@ def get_strategy_file_list():
     """
     """
     api_service: ApiService = run_child.__globals__["api_service"]
-    strategy_file_list = api_service.query_strategy_files()
+    strategy_files = api_service.query_strategy_files()
 
-    return strategy_file_list
+    return strategy_files
 
 
 @api.route('/strategy_file/load', methods=['GET'])
