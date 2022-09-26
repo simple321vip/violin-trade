@@ -276,7 +276,7 @@ class ApiService:
         if t_strategy_class.find_one({"class_name": strategy_class_name}):
             t_strategy_class.delete_one({"class_name": strategy_class_name})
             self.cta_engine.delete_strategy_class_from_classes(strategy_class_name)
-            return 200
+            return strategy_class_name
 
         return
 

@@ -72,9 +72,9 @@ def unload_strategy_file(class_name):
     """
     api_service: ApiService = run_child.__globals__["api_service"]
     if api_service.unload_strategy(class_name):
-        return 200
+        return {}, 200
     else:
-        return 500
+        return {}, 500
 
 
 @api.route('/strategy_file/<file_name>', methods=['DELETE'])
