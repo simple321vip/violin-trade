@@ -1,4 +1,7 @@
-FROM nginx:1.23.1-alpine
+FROM ccr.ccs.tencentyun.com/violin/violin-trade-base:latest
 
-COPY dist /usr/share/nginx/html
+RUN mkdir /apps
+
+WORKDIR /apps
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf

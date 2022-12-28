@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 from typing import Dict
 
-from flask import jsonify, request
+from flask import jsonify, request, Response, make_response
 
 from app.api_v1 import api
 from ..trader.violin_trader import run_child
@@ -71,6 +71,16 @@ def subscribe(vt_symbol: str):
     """
     api_service: ApiService = run_child.__globals__["api_service"]
     return api_service.subscribe(vt_symbol)
+
+
+@api.route('/subscribe/<vt_symbol>', methods=['DELETE'])
+def cancel_subscribe(vt_symbol: str):
+    """
+    """
+    api_service: ApiService = run_child.__globals__["api_service"]
+    api_service.cancel_subscribe(vt_symbol)
+
+    return "", 200
 
 
 @api.route('/subscribe/vt_symbols', methods=['GET'])
