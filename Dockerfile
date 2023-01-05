@@ -1,10 +1,10 @@
 FROM ccr.ccs.tencentyun.com/violin/violin-trade-base:latest
 
-COPY app /apps
+ADD app /apps/app
 
-COPY manage.py /apps
+COPY manage.py /apps/
 
-COPY strategy /apps
+ADD strategy /apps/strategy
 
 EXPOSE 8080
 
