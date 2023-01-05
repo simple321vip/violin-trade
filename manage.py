@@ -1,7 +1,6 @@
 import os
 
 from flask_cors import CORS
-from threading import Thread
 
 from app import create_app
 from app.trader.violin_trader import run_child
@@ -15,5 +14,5 @@ Migrate(app=app)
 if __name__ == '__main__':
 
     run_child()
-    app.run(use_reloader=False)
+    app.run(use_reloader=False, port=8080)
 

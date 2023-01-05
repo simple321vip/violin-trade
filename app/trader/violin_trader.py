@@ -635,6 +635,22 @@ class ApiService:
             return result
         return
 
+    def cancel_subscribe(self, vt_symbol: str):
+        """
+        """
+        symbol, exchange = vt_symbol.split(".")
+        # req: SubscribeRequest = SubscribeRequest(
+        #     symbol=symbol, exchange=Exchange(exchange)
+        # )
+        # self.main_engine.subscribe(req, "CTP")
+        t_subscribe = self.database_client.get_collection("t_subscribe")
+        result = t_subscribe.delete_one({
+                'vt_symbol': vt_symbol
+            })
+        if result:
+            return result
+        return
+
     def get_subscribe_vt_symbols(self) -> Dict:
         """
         to query available symbols.
