@@ -1,4 +1,13 @@
-FROM nginx:1.23.1-alpine
+FROM ccr.ccs.tencentyun.com/violin/violin-trade-base:latest
 
-COPY dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY app /apps
+
+COPY manage.py /apps
+
+COPY strategy /apps
+
+EXPOSE 8080
+
+WORKDIR /apps
+
+ENTRYPOINT ["python", "manage.py"]

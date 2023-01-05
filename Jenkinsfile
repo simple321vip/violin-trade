@@ -45,9 +45,6 @@ spec:
   - name: "volume-m2"
     hostPath:
       path: "/root/.m2/repository"
-  - name: "maven-config"
-    configMap:
-      name: maven-config
   - name: "volume-docker"
     hostPath:
       path: "/var/run/docker.sock"
@@ -63,7 +60,7 @@ spec:
   node(label) {
     def myRepo = checkout([
       $class: 'GitSCM',
-      branches: [[name: "*/dev"]],
+      branches: [[name: "*/master"]],
       doGenerateSubmoduleConfigurations: false,
       extensions:  [[$class: 'CloneOption', noTags: false, reference: '', shallow: true, timeout: 1000]]+[[$class: 'CheckoutOption', timeout: 1000]],
       submoduleCfg: [],
@@ -78,7 +75,7 @@ spec:
 
     def imageTag = "v1.00"
     def registryUrl = "ccr.ccs.tencentyun.com"
-    def imageEndpoint = "violin/violin-home"
+    def imageEndpoint = "violin/violin-trade"
     def image = "${registryUrl}/${imageEndpoint}:${imageTag}"
 
     stage('单元测试') {
@@ -97,19 +94,6 @@ spec:
               docker push ${image}
               """
           }
-        }
-    }
-    stage('预发布') {
-        withKubeConfig([
-            credentialsId: 'kubeconfig',
-            serverUrl: 'https://49.233.4.79:6443'
-        ]) {
-            container('kubectl') {
-                echo "查看 K8S 集群 Pod 列表"
-                sh 'kubectl delete deployment violin-trade-deployment -n dev'
-                sh 'kubectl apply -f violin-trade-dev.yaml'
-                sh 'kubectl get pod -n dev -owide | grep violin-trade-deployment'
-            }
         }
     }
   }
