@@ -31,7 +31,12 @@ SETTINGS["log.level"] = INFO
 SETTINGS["log.console"] = True
 SETTINGS["database.name"] = 'mongodb'
 SETTINGS["database.database"] = 'violin'
+
+# local env
 SETTINGS["database.host"] = 'localhost'
+# prod env
+SETTINGS["database.host"] = 'mongo'
+
 SETTINGS["database.port"] = 27017
 SETTINGS["datafeed.name"] = 'tushare'
 
