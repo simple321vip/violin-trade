@@ -1,7 +1,13 @@
 FROM ccr.ccs.tencentyun.com/violin/violin-trade-base:latest
 
-RUN mkdir /apps
+ADD app /apps/app
+
+COPY manage.py /apps/
+
+ADD strategy /apps/strategy
+
+EXPOSE 8080
 
 WORKDIR /apps
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENTRYPOINT ["python", "manage.py"]
