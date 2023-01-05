@@ -7,6 +7,8 @@ ADD vnpy /apps/vnpy
 COPY manage.py /apps/
 COPY config.py /apps/
 
+RUN export LC_ALL="C"
+
 EXPOSE 8080
 
 WORKDIR /apps
