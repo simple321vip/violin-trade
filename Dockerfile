@@ -7,8 +7,6 @@ ADD vnpy /apps/vnpy
 COPY manage.py /apps/
 COPY config.py /apps/
 
-RUN echo 'LANG="zh_CN.UTF-8"' > /etc/default/locale
-RUN echo 'LANGUAGE="zh_CN:zh"' >> /etc/default/locale
 RUN dpkg-reconfigure locales
 RUN cat /etc/default/locale
 
