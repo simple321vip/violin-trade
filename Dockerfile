@@ -7,9 +7,6 @@ ADD vnpy /apps/vnpy
 COPY manage.py /apps/
 COPY config.py /apps/
 
-RUN dpkg-reconfigure locales
-RUN cat /etc/default/locale
-
 EXPOSE 8080
 
 WORKDIR /apps
