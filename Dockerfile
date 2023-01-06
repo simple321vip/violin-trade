@@ -7,7 +7,8 @@ ADD vnpy /apps/vnpy
 COPY manage.py /apps/
 COPY config.py /apps/
 
-RUN export LC_ALL="C"
+RUN echo 'LANG="zh_CN.UTF-8"' > /etc/default/locale
+RUN echo 'LANGUAGE="zh_CN:zh"' >> /etc/default/locale
 
 EXPOSE 8080
 
