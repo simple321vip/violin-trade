@@ -9,6 +9,8 @@ COPY config.py /apps/
 
 RUN echo 'LANG="zh_CN.UTF-8"' > /etc/default/locale
 RUN echo 'LANGUAGE="zh_CN:zh"' >> /etc/default/locale
+
+RUN apt-get install -y locales
 RUN locale-gen zh_CN.GB18030
 
 EXPOSE 8080
