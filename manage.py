@@ -14,5 +14,5 @@ Migrate(app=app)
 if __name__ == '__main__':
 
     run_child()
-    app.run(use_reloader=False, port=8080)
+    app.run(host='0.0.0.0', use_reloader=False, port=8080)
 
